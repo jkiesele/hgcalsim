@@ -53,7 +53,7 @@ def cms_run_and_publish(task, cfg_file, args):
             n_event = parse_cms_run_event(obj)
             if n_event:
                 task.publish_progress(100. * n_event / task.n_events)
-                task.publish_message("handle event {}".format(n_event))
+                task._publish_message("processing event {}".format(n_event))
         else:
             # obj is the popen object
             if obj.returncode != 0:

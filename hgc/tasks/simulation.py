@@ -45,6 +45,11 @@ class GeneratorParameters(Task):
         "branch number, default: 1")
 
     def store_parts(self):
+        """
+        Method that defines how certain parameters translate into the directory in which output
+        files are stored by means of :py:meth:`Task.local_target` and :py:meth:`Task.local_path`,
+        respectively.
+        """
         parts = super(GeneratorParameters, self).store_parts()
 
         # build the gun string
@@ -90,24 +95,22 @@ class GSDTask(ParallelProdWorkflow):
     def output(self):
         return self.local_target("gsd_{}_n{}.root".format(self.branch, self.n_events))
 
+    @law.decorator.localize()
     def run(self):
-        # localize the output file
-        # (i.e. create a temporary local representation and move it to the destination on success)
-        with self.output().localize("w") as outp:
-            # run the command using a helper that publishes the current progress to the scheduler
-            cms_run_and_publish(self, "$HGC_BASE/hgc/files/gsd_cfg.py", dict(
-                outputFile=outp.path,
-                maxEvents=self.n_events,
-                gunType=self.gun_type,
-                gunMin=self.gun_min,
-                gunMax=self.gun_max,
-                particleIds=self.particle_ids,
-                deltaR=self.delta_r,
-                nParticles=self.n_particles,
-                exactShoot=self.exact_shoot,
-                randomShoot=self.random_shoot,
-                seed=self.seed + self.branch,
-            ))
+        # run the command using a helper that publishes the current progress to the scheduler
+        cms_run_and_publish(self, "$HGC_BASE/hgc/files/gsd_cfg.py", dict(
+            outputFile=self.output().path,
+            maxEvents=self.n_events,
+            gunType=self.gun_type,
+            gunMin=self.gun_min,
+            gunMax=self.gun_max,
+            particleIds=self.particle_ids,
+            deltaR=self.delta_r,
+            nParticles=self.n_particles,
+            exactShoot=self.exact_shoot,
+            randomShoot=self.random_shoot,
+            seed=self.seed + self.branch,
+        ))
 
 
 class RecoTask(ParallelProdWorkflow):
@@ -120,14 +123,16 @@ class RecoTask(ParallelProdWorkflow):
             "dqm": self.local_target("dqm_{}_n{}.root".format(self.branch, self.n_events)),
         }
 
+    @law.decorator.localize()
     def run(self):
-        with self.localize_output("w") as outp:
-            with self.localize_input("r") as inp:
-                cms_run_and_publish(self, "$HGC_BASE/hgc/files/reco_cfg.py", dict(
-                    inputFiles=[inp["gsd"].path],
-                    outputFile=outp["reco"].path,
-                    outputFileDQM=outp["dqm"].path,
-                ))
+        inp = self.input()
+        outp = self.output()
+
+        cms_run_and_publish(self, "$HGC_BASE/hgc/files/reco_cfg.py", dict(
+            inputFiles=[inp["gsd"].path],
+            outputFile=outp["reco"].path,
+            outputFileDQM=outp["dqm"].path,
+        ))
 
 
 class NtupTask(ParallelProdWorkflow):
@@ -137,10 +142,12 @@ class NtupTask(ParallelProdWorkflow):
     def output(self):
         return self.local_target("ntup_{}_n{}.root".format(self.branch, self.n_events))
 
+    @law.decorator.localize()
     def run(self):
-        with self.localize_output("w") as outp:
-            with self.localize_input("r") as inp:
-                cms_run_and_publish(self, "$HGC_BASE/hgc/files/ntup_cfg.py", dict(
-                    inputFiles=[inp["reco"]["reco"].path],
-                    outputFile=outp.path,
-                ))
+        inp = self.input()
+        outp = self.output()
+
+        cms_run_and_publish(self, "$HGC_BASE/hgc/files/ntup_cfg.py", dict(
+            inputFiles=[inp["reco"]["reco"].path],
+            outputFile=outp.path,
+        ))

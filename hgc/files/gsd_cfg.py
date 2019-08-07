@@ -96,40 +96,36 @@ if options.gunType == "flatpt":
             MaxEta=cms.double(HGCAL_ETA_MAX),
         ),
         AddAntiParticle=cms.bool(False),
-        firstRun=cms.untracked.uint32(1),
         Verbosity=cms.untracked.int32(1),
     )
 
 elif options.gunType == "closeby":
     process.generator = cms.EDProducer("CloseByFlatDeltaRGunProducer",
-        PGunParameters=cms.PSet(
-            # particle ids
-            PartID=cms.vint32(particle_ids),
-            # max number of particles to shoot at a time
-            NParticles=cms.int32(options.nParticles),
-            # energy range
-            EnMin=cms.double(options.gunMin),
-            EnMax=cms.double(options.gunMax),
-            # phi range
-            MinPhi=cms.double(-math.pi / 6.),
-            MaxPhi=cms.double(math.pi / 6.),
-            # abs eta range, not used but must be present
-            MinEta=cms.double(0.),
-            MaxEta=cms.double(0.),
-            # longitudinal distance in cm
-            ZMin=cms.double(HGCAL_Z),
-            ZMax=cms.double(HGCAL_Z),
-            # radial distance in cm
-            RhoMin=cms.double(calculate_rho(HGCAL_Z, HGCAL_ETA_MIN)),
-            RhoMax=cms.double(calculate_rho(HGCAL_Z, HGCAL_ETA_MAX)),
-            # direction and overlapp settings
-            DeltaR=cms.double(options.deltaR),
-            ExactShoot=cms.bool(options.exactShoot),
-            RandomShoot=cms.bool(options.randomShoot),
-        ),
-        AddAntiParticle=cms.bool(False),
-        firstRun=cms.untracked.uint32(1),
-        Verbosity=cms.untracked.int32(10),
+        # particle ids
+        particleIDs=cms.vint32(particle_ids),
+        # max number of particles to shoot at a time
+        nParticles=cms.int32(options.nParticles),
+        # shoot exactly the particles defined in particleIDs in that order
+        exactShoot=cms.bool(options.exactShoot),
+        # randomly shoot [1, nParticles] particles, each time randomly drawn from particleIDs
+        randomShoot=cms.bool(options.randomShoot),
+        # energy range
+        eMin=cms.double(options.gunMin),
+        eMax=cms.double(options.gunMax),
+        # phi range
+        phiMin=cms.double(-math.pi / 6.),
+        phiMax=cms.double(math.pi / 6.),
+        # longitudinal distance in cm
+        zMin=cms.double(HGCAL_Z),
+        zMax=cms.double(HGCAL_Z),
+        # radial distance in cm
+        rhoMin=cms.double(calculate_rho(HGCAL_Z, HGCAL_ETA_MIN)),
+        rhoMax=cms.double(calculate_rho(HGCAL_Z, HGCAL_ETA_MAX)),
+        # deltaR settings
+        deltaRMin=cms.double(0.),
+        deltaRMax=cms.double(options.deltaR),
+        # debug flag
+        debug=cms.untracked.bool(True),
     )
 
 else:

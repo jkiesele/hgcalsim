@@ -39,18 +39,17 @@ Task statuses and dependency trees can be visualized live using a central luigi 
 In order to let the tasks communicate with a central luigi scheduler, you should set
 
 ```shell
-export HGC_SCHEDULER_HOST="..."
-export HGC_SCHEDULER_PORT="..."
+export HGC_SCHEDULER_HOST="<user>:<pass>@<host>"
 ```
 
 most probably in your bashrc file. **Otherwise**, you should add `--local-scheduler` to all `law run` commands.
 
-You can also [setup a personal scheduler on OpenStack](https://github.com/CMS-HGCAL/hgcalsim/wiki#setting-up-a-luigi-scheduler-on-openstack).
+You can also [setup a personal scheduler on OpenStack](https://github.com/CMS-HGCAL/hgcalsim/wiki#setting-up-a-luigi-scheduler-on-openstack), or use the [common hgcalsim scheduler](http://hgcalsim-common-scheduler1.cern.ch) (host is `hgcalsim-common-scheduler1`, please [ask](mailto:marcel.rieger@cern.ch?Subject=Access%20to%20common%20hgcalsim%20scheduler) for user and password).
 
 
 ### Storage on EOS
 
-By default, most of the tasks write their output files to EOS. To prevent that (either because you don't have the necessary permissions on in case you want to test your code), add `--eos False` to the `law run` commands.
+All tasks can write their output targets to EOS. To enable that, add `--eos` to the `law run` commands. By default, the base store path is `/eos/cms/store/cmst3/group/hgcal/CMG_studies/$HGC_GRID_USER/hgcalsim` (make sure you have access to the hgcal group space) but can be configured by setting the `HGC_STORE_EOS` environment variable to a path of your choice.
 
 
 ### Example commands
@@ -61,7 +60,7 @@ Re-compile CMSSW with 2 cores after making some updates to the code:
 law run sw.CompileCMSSW --n-cores 2
 ```
 
-Run GSD, RECO, and NTUP steps:
+Run GSD, RECO, and NTUP steps in one go:
 
 ```shell
 law run sim.NtupTask --n-events 2 --branch 0 --version dev
