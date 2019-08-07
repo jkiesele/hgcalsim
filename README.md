@@ -12,7 +12,7 @@
 This repository has submodules, so you should clone it with
 
 ```shell
-git clone --recursive https://github.com/riga/hgcalsim.git
+git clone --recursive https://github.com/CMS-HGCAL/hgcalsim.git
 ```
 
 If you want to write files into the common hgcalsim output directory on EOS at `/eos/cms/store/cmst3/group/hgcal/CMG_studies/hgcalsim` (given that you have the necessary permissions), export
@@ -45,7 +45,7 @@ export HGC_SCHEDULER_PORT="..."
 
 most probably in your bashrc file. **Otherwise**, you should add `--local-scheduler` to all `law run` commands.
 
-You can also [setup a personal scheduler on OpenStack](https://github.com/riga/hgcalsim/wiki#setting-up-a-luigi-scheduler-on-openstack).
+You can also [setup a personal scheduler on OpenStack](https://github.com/CMS-HGCAL/hgcalsim/wiki#setting-up-a-luigi-scheduler-on-openstack).
 
 
 ### Storage on EOS
