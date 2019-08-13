@@ -8,11 +8,16 @@ HGCAL simulation tasks.
 __all__ = ["GSDTask", "RecoTask", "NtupTask"]
 
 
+import sys
 import os
 import random
+import collections
+import argparse
+import contextlib
 
 import law
 import luigi
+import six
 
 from hgc.tasks.base import Task, HTCondorWorkflow
 from hgc.util import cms_run_and_publish, log_runtime
@@ -21,28 +26,76 @@ from hgc.util import cms_run_and_publish, log_runtime
 luigi.namespace("sim", scope=__name__)
 
 
+@contextlib.contextmanager
+def import_hgcal_pgun():
+    prodtools_path = os.path.expandvars("$CMSSW_BASE/src/reco_prodtools")
+    sys.path.insert(0, prodtools_path)
+
+    try:
+        import SubmitHGCalPGun
+        yield SubmitHGCalPGun
+
+    finally:
+        sys.path.pop(0)
+
+
 class GeneratorParameters(Task):
 
-    n_events = luigi.IntParameter(default=10, description="number of events to generate per task")
+    # n_events = luigi.IntParameter(default=10, description="number of events to generate per task")
+    # gun_type = luigi.ChoiceParameter(default="closeby", choices=["flatpt", "closeby"],
+    #     description="the type of the particle gun")
+    # gun_min = luigi.FloatParameter(default=1.0, description="minimum value of the gun, either in "
+    #     "pt or E, default: 1.0")
+    # gun_max = luigi.FloatParameter(default=100.0, description="maximum value of the gun, either in "
+    #     "pt or E, default: 100.0")
+    # particle_ids = luigi.Parameter(default="mix", description="comma-separated list of particle "
+    #     "ids to shoot, or 'mix', default: mix")
+    # delta_r = luigi.FloatParameter(default=0.1, description="distance parameter, 'closeby' gun "
+    #     "only, default: 0.1")
+    # n_particles = luigi.IntParameter(default=10, description="number of particles to shoot, "
+    #     "'closeby' gun only, default: 10")
+    # exact_shoot = luigi.BoolParameter(default=False, description="shoot exactly the particles "
+    #     "given particle-ids in that order and quantity, 'closeby' gun only, default: False")
+    # random_shoot = luigi.BoolParameter(default=True, description="shoot a random number of "
+    #     "particles between [1, n_particles], 'closeby' gun only, default: True")
+
     n_tasks = luigi.IntParameter(default=1, description="number of branch tasks to create")
-    gun_type = luigi.ChoiceParameter(default="closeby", choices=["flatpt", "closeby"],
-        description="the type of the particle gun")
-    gun_min = luigi.FloatParameter(default=1.0, description="minimum value of the gun, either in "
-        "pt or E, default: 1.0")
-    gun_max = luigi.FloatParameter(default=100.0, description="maximum value of the gun, either in "
-        "pt or E, default: 100.0")
-    particle_ids = luigi.Parameter(default="mix", description="comma-separated list of particle "
-        "ids to shoot, or 'mix', default: mix")
-    delta_r = luigi.FloatParameter(default=0.1, description="distance parameter, 'closeby' gun "
-        "only, default: 0.1")
-    n_particles = luigi.IntParameter(default=10, description="number of particles to shoot, "
-        "'closeby' gun only, default: 10")
-    exact_shoot = luigi.BoolParameter(default=False, description="shoot exactly the particles "
-        "given particle-ids in that order and quantity, 'closeby' gun only, default: False")
-    random_shoot = luigi.BoolParameter(default=True, description="shoot a random number of "
-        "particles between [1, n_particles], 'closeby' gun only, default: True")
     seed = luigi.IntParameter(default=1, description="initial random seed, will be increased by "
         "branch number, default: 1")
+
+    prodtools_parser = None
+    prodtools_specs = None
+    prodtools_skip_opts = ("help", "tag", "queue", "evtsperjob", "inDir", "outDir", "local",
+        "dry-run", "eosArea", "cfg", "datTier", "skipInputs", "keepDQMfile")
+
+    @classmethod
+    def get_prodtools_parser(cls):
+        if not cls.prodtools_parser:
+            with import_hgcal_pgun() as SubmitHGCalPGun:
+                cls.prodtools_parser = SubmitHGCalPGun.createParser()
+
+        return cls.prodtools_parser
+
+    @classmethod
+    def get_prodtools_specs(cls):
+        if not cls.prodtools_specs:
+            cls.prodtools_specs = collections.OrderedDict()
+
+            for opt in cls.get_prodtools_parser().option_list:
+                name = opt.get_opt_string()
+                opt_name = name[2:]
+
+                if not name.startswith("--") or opt_name in cls.prodtools_skip_opts:
+                    continue
+
+                opt_type = opt.type
+                if not opt_type and isinstance(opt.default, bool):
+                    opt_type = "bool"
+
+                cls.prodtools_specs[opt_name] = dict(type=opt_type, default=opt.default,
+                    help=opt.help, dest=opt.dest or opt_name)
+
+        return cls.prodtools_specs
 
     def store_parts(self):
         """
@@ -52,20 +105,77 @@ class GeneratorParameters(Task):
         """
         parts = super(GeneratorParameters, self).store_parts()
 
-        # build the gun string
-        assert(self.gun_type in ("flatpt", "closeby"))
-        gun_str = "{}_{}To{}_ids{}".format(self.gun_type, self.gun_min, self.gun_max,
-            self.particle_ids.replace(",", "-"))
-        if self.gun_type == "closeby":
-            gun_str += "_dR{}_n{}".format(self.delta_r, self.n_particles)
-            # add the exact or random shoot postfix for backwards compatibility
-            if self.exact_shoot:
-                gun_str += "_ext1"
-            else:
-                gun_str += "_rnd{:d}".format(self.random_shoot)
-        gun_str += "_s{}".format(self.seed)
+        # for the moment, just create a hash of all prodtools parameter values
+        param_names = sorted(list(self.get_prodtools_specs().keys()))
+        param_hash = law.util.create_hash([getattr(self, attr) for attr in param_names])
 
-        return parts + (gun_str,)
+        return parts + (param_hash,)
+
+
+# register prodtool parameters to the GeneratorParameters base task to resemble its interface
+for opt_name, opt_data in six.iteritems(GeneratorParameters.get_prodtools_specs()):
+    cls = {
+        "int": luigi.IntParameter,
+        "string": luigi.Parameter,
+        "bool": luigi.BoolParameter,
+        "float": luigi.FloatParameter,
+    }[opt_data["type"]]
+
+    param = cls(default=opt_data["default"], description=opt_data["help"])
+
+    setattr(GeneratorParameters, opt_name, param)
+
+
+class CreateConfigs(GeneratorParameters):
+
+    def output(self):
+        return {
+            tier: self.local_target("{}_cfg.py".format(tier))
+            for tier in ("gsd", "reco", "ntup")
+        }
+
+    @law.decorator.localize()
+    @law.decorator.safe_output()
+    def run(self):
+        output = self.output()
+
+        # do the following steps for all data tiers
+        for tier, outp in output.items():
+            # create a temporary directories to create the files in
+            tmp_dir = law.LocalDirectoryTarget(is_tmp=True)
+            tmp_dir.child("cfg", type="d").touch()
+            tmp_dir.child("jobs", type="d").touch()
+
+            # get parameters related to prodtools
+            specs = self.get_prodtools_specs()
+            params = {spec["dest"]: getattr(self, name) for name, spec in specs.items()}
+
+            # extend by fixed values
+            params.update(dict(
+                outDir=tmp_dir.path,
+                inDir="",
+                DTIER=tier.upper(),
+                CONFIGFILE="",
+                eosArea="",
+                LOCAL=True,
+                QUEUE="tomorrow",
+                DRYRUN=True,
+                EVTSPERJOB=self.nevts,
+                TAG="",
+                skipInputs=True,
+                DQM=True,
+            ))
+
+            # run submitHGCalProduction
+            with import_hgcal_pgun() as SubmitHGCalPGun:
+                cfgs = SubmitHGCalPGun.submitHGCalProduction(opt=argparse.Namespace(**params))
+
+            if len(cfgs) != 1:
+                raise Exception("SubmitHGCalPGun created {} config files for data tier {}, while 1 "
+                    "was expected".format(tier, len(cfgs)))
+
+            # provide the output
+            outp.copy_from_local(cfgs[0])
 
 
 class ParallelProdWorkflow(GeneratorParameters, law.LocalWorkflow, HTCondorWorkflow):
@@ -77,50 +187,57 @@ class ParallelProdWorkflow(GeneratorParameters, law.LocalWorkflow, HTCondorWorkf
 
     def workflow_requires(self):
         reqs = super(ParallelProdWorkflow, self).workflow_requires()
+
+        # always require the config files for this set of generator parameters
+        reqs["cfg"] = CreateConfigs.req(self, _prefer_cli=["version"])
+
+        # add the "previous" task when not piloting
         if self.previous_task and not self.pilot:
             key, cls = self.previous_task
             reqs[key] = cls.req(self, _prefer_cli=["version"])
+
         return reqs
 
     def requires(self):
         reqs = {}
+
+        # always require the config files for this set of generator parameters
+        reqs["cfg"] = CreateConfigs.req(self, _prefer_cli=["version"])
+
+        # add the "previous" task
         if self.previous_task:
             key, cls = self.previous_task
             reqs[key] = cls.req(self, _prefer_cli=["version"])
+
         return reqs
 
 
 class GSDTask(ParallelProdWorkflow):
 
     def output(self):
-        return self.local_target("gsd_{}_n{}.root".format(self.branch, self.n_events))
+        return self.local_target("gsd_{}.root".format(self.branch))
 
     @law.decorator.localize()
     def run(self):
+        inp = self.input()
+
         # run the command using a helper that publishes the current progress to the scheduler
-        cms_run_and_publish(self, "$HGC_BASE/hgc/files/gsd_cfg.py", dict(
+        cms_run_and_publish(self, inp["cfg"]["gsd"].path, dict(
             outputFile=self.output().path,
-            maxEvents=self.n_events,
-            gunType=self.gun_type,
-            gunMin=self.gun_min,
-            gunMax=self.gun_max,
-            particleIds=self.particle_ids,
-            deltaR=self.delta_r,
-            nParticles=self.n_particles,
-            exactShoot=self.exact_shoot,
-            randomShoot=self.random_shoot,
+            maxEvents=self.nevts,
             seed=self.seed + self.branch,
         ))
 
 
 class RecoTask(ParallelProdWorkflow):
 
+    # set previous_task which ParallelProdWorkflow uses to set the requirements
     previous_task = ("gsd", GSDTask)
 
     def output(self):
         return {
-            "reco": self.local_target("reco_{}_n{}.root".format(self.branch, self.n_events)),
-            "dqm": self.local_target("dqm_{}_n{}.root".format(self.branch, self.n_events)),
+            "reco": self.local_target("reco_{}.root".format(self.branch)),
+            "dqm": self.local_target("dqm_{}.root".format(self.branch)),
         }
 
     @law.decorator.localize()
@@ -128,7 +245,7 @@ class RecoTask(ParallelProdWorkflow):
         inp = self.input()
         outp = self.output()
 
-        cms_run_and_publish(self, "$HGC_BASE/hgc/files/reco_cfg.py", dict(
+        cms_run_and_publish(self, inp["cfg"]["reco"].path, dict(
             inputFiles=[inp["gsd"].path],
             outputFile=outp["reco"].path,
             outputFileDQM=outp["dqm"].path,
@@ -137,17 +254,18 @@ class RecoTask(ParallelProdWorkflow):
 
 class NtupTask(ParallelProdWorkflow):
 
+    # set previous_task which ParallelProdWorkflow uses to set the requirements
     previous_task = ("reco", RecoTask)
 
     def output(self):
-        return self.local_target("ntup_{}_n{}.root".format(self.branch, self.n_events))
+        return self.local_target("ntup_{}.root".format(self.branch))
 
     @law.decorator.localize()
     def run(self):
         inp = self.input()
         outp = self.output()
 
-        cms_run_and_publish(self, "$HGC_BASE/hgc/files/ntup_cfg.py", dict(
+        cms_run_and_publish(self, inp["cfg"]["ntup"].path, dict(
             inputFiles=[inp["reco"]["reco"].path],
             outputFile=outp.path,
         ))

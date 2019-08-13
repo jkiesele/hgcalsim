@@ -67,17 +67,17 @@ action() {
     hgc_install_pip() {
         pip install --ignore-installed --no-cache-dir --prefix "$HGC_SOFTWARE" "$@"
     }
-    export -f hgc_install_pip
+    [ -z "$ZSH_VERSION" ] && export -f hgc_install_pip
 
     hgc_add_py() {
         [ ! -z "$1" ] && export PYTHONPATH="$1:$PYTHONPATH"
     }
-    export -f hgc_add_py
+    [ -z "$ZSH_VERSION" ] && export -f hgc_add_py
 
     hgc_add_bin() {
         [ ! -z "$1" ] && export PATH="$1:$PATH"
     }
-    export -f hgc_add_bin
+    [ -z "$ZSH_VERSION" ] && export -f hgc_add_bin
 
     hgc_cmssw_base() {
         if [ -z "$CMSSW_VERSION" ]; then
@@ -86,7 +86,7 @@ action() {
         fi
         echo "$HGC_BASE/cmssw/$( whoami )/$CMSSW_VERSION"
     }
-    export -f hgc_cmssw_base
+    [ -z "$ZSH_VERSION" ] && export -f hgc_cmssw_base
 
 
     #
@@ -115,7 +115,7 @@ action() {
         # custom packages
         git cms-init
         git cms-addpkg IOMC/ParticleGuns
-        git cms-merge-topic riga:add_CloseByFlatDeltaRGunProducer_11_0_0_pre3
+        git cms-merge-topic CMS-HGCAL:HGC_CMSSW_11_0_0_pre5
         git clone https://github.com/CMS-HGCAL/reco-prodtools.git reco_prodtools
         git clone https://github.com/CMS-HGCAL/reco-ntuples.git RecoNtuples
 
@@ -189,7 +189,7 @@ action() {
             echo "skip setting up gfal2 plugins"
         fi
     }
-    export -f hgc_install_software
+    [ -z "$ZSH_VERSION" ] && export -f hgc_install_software
     hgc_install_software silent
 
     # update the GFAL_PLUGIN_DIR

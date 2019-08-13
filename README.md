@@ -42,7 +42,7 @@ In order to let the tasks communicate with a central luigi scheduler, you should
 export HGC_SCHEDULER_HOST="<user>:<pass>@<host>"
 ```
 
-most probably in your bashrc file. **Otherwise**, you should add `--local-scheduler` to all `law run` commands.
+most probably in your bashrc file. **Otherwise**, you should add `local-scheduler: True` to the `[luigi_core]` section in the `law.cfg` config file or add `--local-scheduler` to all `law run` commands.
 
 You can also [setup a personal scheduler on OpenStack](https://github.com/CMS-HGCAL/hgcalsim/wiki#setting-up-a-luigi-scheduler-on-openstack), or use the [common hgcalsim scheduler](http://hgcalsim-common-scheduler1.cern.ch) (host is `hgcalsim-common-scheduler1`, please [ask](mailto:marcel.rieger@cern.ch?Subject=Access%20to%20common%20hgcalsim%20scheduler) for user and password).
 

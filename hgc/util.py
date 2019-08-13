@@ -43,7 +43,7 @@ def parse_cms_run_event(line):
     return int(match.group(1))
 
 
-def cms_run_and_publish(task, cfg_file, args):
+def cms_run_and_publish(task, cfg_file, args, n_events=None):
     # run the command, parse output as it comes
     for obj in cms_run(cfg_file, args, yield_output=True):
         if isinstance(obj, six.string_types):
@@ -52,12 +52,13 @@ def cms_run_and_publish(task, cfg_file, args):
             # try to parse the event number
             n_event = parse_cms_run_event(obj)
             if n_event:
-                task.publish_progress(100. * n_event / task.n_events)
                 task._publish_message("processing event {}".format(n_event))
+                if n_events:
+                    task.publish_progress(100. * n_event / n_events)
         else:
             # obj is the popen object
             if obj.returncode != 0:
-                raise Exception("cmsRun failed failed")
+                raise Exception("cmsRun failed")
 
 
 @contextlib.contextmanager
