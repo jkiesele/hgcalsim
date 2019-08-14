@@ -20,6 +20,12 @@ action() {
     # source the user setup file when existing
     [ -f "$this_dir/setup_user.sh" ] && source "$this_dir/setup_user.sh" ""
 
+    # check if the law submodule is existing
+    if [ ! -d "$this_dir/modules/law/law" ]; then
+        2>&1 echo "please initialize the law submodule first via 'git submodule init modules/law && git submodule update modules/law'"
+        return "1"
+    fi
+
 
     #
     # global variables
@@ -117,6 +123,7 @@ action() {
         git cms-addpkg IOMC/ParticleGuns
         git cms-merge-topic CMS-HGCAL:HGC_CMSSW_11_0_0_pre5
         git clone https://github.com/CMS-HGCAL/reco-prodtools.git reco_prodtools
+        ( cd reco_prodtools; git checkout dev )
         git clone https://github.com/CMS-HGCAL/reco-ntuples.git RecoNtuples
 
         # compile

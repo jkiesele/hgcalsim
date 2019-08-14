@@ -41,24 +41,6 @@ def import_hgcal_pgun():
 
 class GeneratorParameters(Task):
 
-    # n_events = luigi.IntParameter(default=10, description="number of events to generate per task")
-    # gun_type = luigi.ChoiceParameter(default="closeby", choices=["flatpt", "closeby"],
-    #     description="the type of the particle gun")
-    # gun_min = luigi.FloatParameter(default=1.0, description="minimum value of the gun, either in "
-    #     "pt or E, default: 1.0")
-    # gun_max = luigi.FloatParameter(default=100.0, description="maximum value of the gun, either in "
-    #     "pt or E, default: 100.0")
-    # particle_ids = luigi.Parameter(default="mix", description="comma-separated list of particle "
-    #     "ids to shoot, or 'mix', default: mix")
-    # delta_r = luigi.FloatParameter(default=0.1, description="distance parameter, 'closeby' gun "
-    #     "only, default: 0.1")
-    # n_particles = luigi.IntParameter(default=10, description="number of particles to shoot, "
-    #     "'closeby' gun only, default: 10")
-    # exact_shoot = luigi.BoolParameter(default=False, description="shoot exactly the particles "
-    #     "given particle-ids in that order and quantity, 'closeby' gun only, default: False")
-    # random_shoot = luigi.BoolParameter(default=True, description="shoot a random number of "
-    #     "particles between [1, n_particles], 'closeby' gun only, default: True")
-
     n_tasks = luigi.IntParameter(default=1, description="number of branch tasks to create")
     seed = luigi.IntParameter(default=1, description="initial random seed, will be increased by "
         "branch number, default: 1")
@@ -246,9 +228,9 @@ class RecoTask(ParallelProdWorkflow):
         outp = self.output()
 
         cms_run_and_publish(self, inp["cfg"]["reco"].path, dict(
-            inputFiles=[inp["gsd"].path],
-            outputFile=outp["reco"].path,
-            outputFileDQM=outp["dqm"].path,
+            inputFiles=[inp["gsd"].uri()],
+            outputFile=outp["reco"].uri(),
+            outputFileDQM=outp["dqm"].uri(),
         ))
 
 
@@ -266,6 +248,6 @@ class NtupTask(ParallelProdWorkflow):
         outp = self.output()
 
         cms_run_and_publish(self, inp["cfg"]["ntup"].path, dict(
-            inputFiles=[inp["reco"]["reco"].path],
-            outputFile=outp.path,
+            inputFiles=[inp["reco"]["reco"].uri()],
+            outputFile=outp.uri(),
         ))
