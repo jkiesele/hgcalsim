@@ -14,7 +14,7 @@ import math
 import law
 import luigi
 
-law.contrib.load("htcondor", "tasks", "telegram", "root")
+law.contrib.load("htcondor", "slack", "tasks", "telegram", "root")
 
 
 class Task(law.Task):
@@ -23,7 +23,11 @@ class Task(law.Task):
     """
 
     version = luigi.Parameter(description="version of outputs to produce")
-    notify = law.NotifyTelegramParameter(significant=False)
+    notify = law.NotifyMultiParameter(parameters=[
+        law.NotifyTelegramParameter(significant=False),
+        law.NotifySlackParameter(significant=False),
+    ])
+
     eos = luigi.BoolParameter(default=False, description="store local targets on EOS instead of in "
         "the local HGC_STORE directory, default: False")
 
