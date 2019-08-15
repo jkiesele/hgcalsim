@@ -229,7 +229,7 @@ action() {
     else
         export HGC_LOCAL_CACHE="$HGC_DATA/cache"
         export HGC_LUIGI_WORKER_KEEP_ALIVE="False"
-        export HGC_LUIGI_WORKER_FORCE_MULTIPROCESSING="False"
+        export HGC_LUIGI_WORKER_FORCE_MULTIPROCESSING="True"
     fi
 
     if [ -z "$HGC_SCHEDULER_HOST" ]; then
