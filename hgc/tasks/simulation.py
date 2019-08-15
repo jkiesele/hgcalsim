@@ -11,6 +11,7 @@ __all__ = ["GSDTask", "RecoTask", "NtupTask"]
 import sys
 import os
 import random
+import math
 import collections
 import argparse
 import contextlib
@@ -41,7 +42,8 @@ def import_hgcal_pgun():
 
 class GeneratorParameters(Task):
 
-    n_tasks = luigi.IntParameter(default=1, description="number of branch tasks to create")
+    n_tasks = luigi.IntParameter(default=1, description="number of branch tasks to create to "
+        "parallelize the simulation of the requested number of events")
     seed = luigi.IntParameter(default=1, description="initial random seed, will be increased by "
         "branch number, default: 1")
 
@@ -111,10 +113,10 @@ for opt_name, opt_data in six.iteritems(GeneratorParameters.get_prodtools_specs(
 class CreateConfigs(GeneratorParameters):
 
     def output(self):
-        return {
-            tier: self.local_target("{}_cfg.py".format(tier))
+        return collections.OrderedDict(
+            (tier, self.local_target("{}_cfg.py".format(tier)))
             for tier in ("gsd", "reco", "ntup")
-        }
+        )
 
     @law.decorator.localize()
     @law.decorator.safe_output()
@@ -202,11 +204,12 @@ class GSDTask(ParallelProdWorkflow):
     @law.decorator.localize()
     def run(self):
         inp = self.input()
+        outp = self.output()
 
         # run the command using a helper that publishes the current progress to the scheduler
         cms_run_and_publish(self, inp["cfg"]["gsd"].path, dict(
-            outputFile=self.output().path,
-            maxEvents=self.nevts,
+            outputFile=outp.uri(),
+            maxEvents=int(math.ceil(self.nevts / float(self.n_tasks))),
             seed=self.seed + self.branch,
         ))
 

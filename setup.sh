@@ -20,11 +20,12 @@ action() {
     # source the user setup file when existing
     [ -f "$this_dir/setup_user.sh" ] && source "$this_dir/setup_user.sh" ""
 
-    # check if the law submodule is existing
-    if [ ! -d "$this_dir/modules/law/law" ]; then
-        2>&1 echo "please initialize the law submodule first via 'git submodule init modules/law && git submodule update modules/law'"
-        return "1"
-    fi
+    # init and update the law submodule
+    (\
+        cd "$this_dir" && \
+        git submodule init modules/law && \
+        git submodule update modules/law
+    )
 
 
     #
@@ -184,6 +185,7 @@ action() {
 
         hgc_install_pip wget
         hgc_install_pip python-telegram-bot
+        hgc_install_pip slackclient
         hgc_install_pip luigi
 
         # setup gfal, setup patched plugins, remove the http plugin
