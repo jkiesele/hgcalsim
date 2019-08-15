@@ -10,6 +10,7 @@ __all__ = ["Task", "HTCondorWorkflow"]
 
 import os
 import math
+import getpass
 
 import law
 import luigi
@@ -30,6 +31,9 @@ class Task(law.Task):
 
     eos = luigi.BoolParameter(default=False, description="store local targets on EOS instead of in "
         "the local HGC_STORE directory, default: False")
+
+    user = luigi.Parameter(default=getpass.getuser(), significant=False, description="the user "
+        "executing the task, only for visual purposes on central luigi schedulers")
 
     exclude_params_req = {"notify"}
     exclude_params_branch = {"notify"}
