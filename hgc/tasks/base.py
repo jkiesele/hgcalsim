@@ -15,7 +15,7 @@ import getpass
 import law
 import luigi
 
-law.contrib.load("htcondor", "slack", "tasks", "telegram", "root")
+law.contrib.load("htcondor", "slack", "tasks", "telegram", "root", "wlcg")
 
 
 class Task(law.Task):
@@ -25,8 +25,8 @@ class Task(law.Task):
 
     version = luigi.Parameter(description="version of outputs to produce")
     notify = law.NotifyMultiParameter(parameters=[
-        law.NotifyTelegramParameter(significant=False),
-        law.NotifySlackParameter(significant=False),
+        law.telegram.NotifyTelegramParameter(significant=False),
+        law.slack.NotifySlackParameter(significant=False),
     ])
 
     eos = luigi.BoolParameter(default=False, description="store local targets on EOS instead of in "
@@ -72,7 +72,7 @@ class Task(law.Task):
         return cls(self.local_path(*args, store=kwargs.pop("store", None)), **kwargs)
 
 
-class HTCondorWorkflow(law.HTCondorWorkflow):
+class HTCondorWorkflow(law.htcondor.HTCondorWorkflow):
     """
     Custom htcondor workflow with good default configs for the CERN batch system.
     """
@@ -80,9 +80,11 @@ class HTCondorWorkflow(law.HTCondorWorkflow):
     poll_interval = luigi.FloatParameter(default=0.5, significant=False, description="time between "
         "status polls in minutes, default: 0.5")
     max_runtime = luigi.FloatParameter(default=24.0, significant=False, description="maximum "
-        "runtime in hours")
+        "runtime in hours, default: 24.0")
+    transfer_logs = luigi.BoolParameter(significant=True, description="transfer job logs to the "
+        "output directory, default: True")
     only_missing = luigi.BoolParameter(default=True, significant=False, description="skip tasks "
-        "that are considered complete")
+        "that are considered complete, default: True")
     cmst3 = luigi.BoolParameter(default=False, significant=False, description="use the CMS T3 "
         "HTCondor quota for jobs, default: False")
 
@@ -99,6 +101,10 @@ class HTCondorWorkflow(law.HTCondorWorkflow):
         return True
 
     def htcondor_job_config(self, config, job_num, branches):
+        # add X509_USER_CERT to input files
+        user_cert = law.wlcg.get_voms_proxy_file()
+        if user_cert and os.path.exists(user_cert):
+            config.input_files.append(user_cert)
         # render_data is rendered into all files sent with a job
         config.render_variables["hgc_base"] = os.getenv("HGC_BASE")
         # force to run on CC7, http://batchdocs.web.cern.ch/batchdocs/local/submit.html#os-choice

@@ -81,7 +81,7 @@ class ConverterTask(ParallelProdWorkflow):
         self.output().copy_from_local(output_dir.child(output_basename))
 
 
-class MergeConvertedFiles(GeneratorParameters, law.CascadeMerge):
+class MergeConvertedFiles(GeneratorParameters, law.tasks.CascadeMerge):
 
     n_merged_files = luigi.IntParameter(description="number of files after merging")
 

@@ -201,7 +201,8 @@ class GSDTask(ParallelProdWorkflow):
     def output(self):
         return self.local_target("gsd_{}.root".format(self.branch))
 
-    @law.decorator.localize()
+    @law.decorator.notify
+    @law.decorator.localize
     def run(self):
         inp = self.input()
         outp = self.output()
@@ -225,7 +226,8 @@ class RecoTask(ParallelProdWorkflow):
             "dqm": self.local_target("dqm_{}.root".format(self.branch)),
         }
 
-    @law.decorator.localize()
+    @law.decorator.notify
+    @law.decorator.localize
     def run(self):
         inp = self.input()
         outp = self.output()
@@ -245,7 +247,8 @@ class NtupTask(ParallelProdWorkflow):
     def output(self):
         return self.local_target("ntup_{}.root".format(self.branch))
 
-    @law.decorator.localize()
+    @law.decorator.notify
+    @law.decorator.localize
     def run(self):
         inp = self.input()
         outp = self.output()

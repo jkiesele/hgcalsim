@@ -19,7 +19,7 @@ from hgc.tasks.base import Task
 luigi.namespace("sw", scope=__name__)
 
 
-class CompileCMSSW(Task, law.RunOnceTask):
+class CompileCMSSW(Task, law.tasks.RunOnceTask):
 
     n_cores = luigi.IntParameter(default=1, significant=False, description="the number of cores to "
         "use for compiling cmssw")

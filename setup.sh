@@ -21,11 +21,19 @@ action() {
     [ -f "$this_dir/setup_user.sh" ] && source "$this_dir/setup_user.sh" ""
 
     # init and update the law submodule
-    (\
-        cd "$this_dir" && \
-        git submodule init modules/law && \
-        git submodule update modules/law
-    )
+    if [ ! -d "$this_dir/modules/law/law" ]; then
+        (\
+            cd "$this_dir" && \
+            git submodule init modules/law && \
+            git submodule update modules/law
+        )
+    else
+        (\
+            cd "$this_dir/modules/law" && \
+            git checkout master && \
+            git pull
+        )
+    fi
 
 
     #
@@ -150,6 +158,13 @@ action() {
     #
     # minimal software stack
     #
+
+   # certificate proxy handling
+    local proxy_base="x509up_u$( id -u )"
+    if [ "$HGC_ON_HTCONDOR" = "1" ] && ls ${proxy_base}* &> /dev/null; then
+        export X509_USER_CERT="/tmp/$proxy_base"
+        cp "$( ls ${proxy_base}* | head -n 1 )" "$X509_USER_CERT"
+    fi
 
     # variables for external software
     export GLOBUS_THREAD_MODEL="none"
