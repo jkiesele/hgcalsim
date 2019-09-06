@@ -6,8 +6,7 @@ Helpful utilities.
 
 
 __all__ = [
-    "cms_run", "parse_cms_run_event", "cms_run_and_publish", "log_runtime", "ensure_proxy",
-    "hadd_task",
+    "cms_run", "parse_cms_run_event", "cms_run_and_publish", "log_runtime", "hadd_task",
 ]
 
 
@@ -83,18 +82,6 @@ def log_runtime(log_fn=None, log_prefix=""):
             msg = log_prefix + msg
 
         log_fn(msg)
-
-
-@law.decorator.factory()
-def ensure_proxy(fn, opts, task, *args, **kwargs):
-    """
-    Decorator for law task methods that check the validity of the voms proxy.
-    """
-    # check the voms-proxy validity
-    if not law.check_voms_proxy_validity():
-        raise Exception("voms proxy not valid")
-
-    return fn(task, *args, **kwargs)
 
 
 def hadd_task(task, inputs, output):

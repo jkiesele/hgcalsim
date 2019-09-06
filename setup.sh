@@ -3,12 +3,6 @@
 action() {
     local origin="$( pwd )"
 
-    # do nothing when the setup was already done
-    if [ "$HGC_SETUP" = "1" ]; then
-        echo "hgcalsim already setup"
-        return "0"
-    fi
-
     # determine the directory of this file
     if [ ! -z "$ZSH_VERSION" ]; then
         local this_file="${(%):-%x}"
@@ -164,6 +158,7 @@ action() {
     if [ "$HGC_ON_HTCONDOR" = "1" ] && ls ${proxy_base}* &> /dev/null; then
         export X509_USER_CERT="/tmp/$proxy_base"
         cp "$( ls ${proxy_base}* | head -n 1 )" "$X509_USER_CERT"
+        voms-proxy-info
     fi
 
     # variables for external software
@@ -258,8 +253,5 @@ action() {
 
     # rerun the task indexing
     law index --verbose
-
-    # remember that the setup run
-    export HGC_SETUP="1"
 }
 action "$@"

@@ -60,14 +60,29 @@ Re-compile CMSSW with 2 cores after making some updates to the code:
 law run sw.CompileCMSSW --n-cores 2
 ```
 
-Run GSD, RECO, and NTUP steps in one go:
+Run GSD, RECO, and NTUP steps in one go, shooting 10 events with 2 photons each using the `closebydr` gun for some energy range and overlap setting:
 
 ```shell
-law run sim.NtupTask --n-events 2 --branch 0 --version dev
+law run sim.NtupTask \
+  --version dev \
+  --nevts 10 \
+  --gunMode closebydr \
+  --partID 22,22 \
+  --thresholdMin 1 --thresholdMax 100 \
+  --zMin 319 --zMax 319 \
+  --rMin 0 --rMax 0.4
 ```
 
-Run the above steps for 10 tasks on HTCondor:
+Run the above steps for 10 tasks on HTCondor (only the last line of the command is differing / added):
 
 ```shell
-law run sim.NtupTask --n-events 2 --n-tasks 10 --version dev --pilot --workflow htcondor
+law run sim.NtupTask \
+  --version dev \
+  --nevts 10 \
+  --gunMode closebydr \
+  --partID 22,22 \
+  --thresholdMin 1 --thresholdMax 100 \
+  --zMin 319 --zMax 319 \
+  --rMin 0 --rMax 0.4 \
+  --n-tasks 10 --pilot --workflow htcondor
 ```
