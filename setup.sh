@@ -104,9 +104,9 @@ action() {
     #
 
     # default CMSSW version
-    [ -z "$HGC_CMSSW_VERSION" ] && export HGC_CMSSW_VERSION="CMSSW_11_0_0_pre5"
+    [ -z "$HGC_CMSSW_VERSION" ] && export HGC_CMSSW_VERSION="CMSSW_11_0_0_pre9"
 
-    export SCRAM_ARCH="slc7_amd64_gcc700"
+    export SCRAM_ARCH="slc7_amd64_gcc820"
     export CMSSW_VERSION="$HGC_CMSSW_VERSION"
     export CMSSW_BASE="$( hgc_cmssw_base )"
 
@@ -124,7 +124,11 @@ action() {
         # custom packages
         git cms-init
         git cms-addpkg IOMC/ParticleGuns
-        git cms-merge-topic CMS-HGCAL:HGC_CMSSW_11_0_0_pre5
+        git cms-addpkg SimCalorimetry/Configuration
+        git cms-addpkg SimDataFormats/CaloAnalysis
+        git cms-addpkg SimGeneral/CaloAnalysis
+        git cms-addpkg SimGeneral/MixingModule
+        git cms-checkout-topic riga:hgc_simcluster_merging
         git clone https://github.com/CMS-HGCAL/reco-prodtools.git reco_prodtools
         ( cd reco_prodtools; git checkout dev )
         git clone https://github.com/CMS-HGCAL/reco-ntuples.git RecoNtuples
@@ -138,7 +142,7 @@ action() {
 
         # create the prodtools base templates once
         cd reco_prodtools/templates/python
-        ./produceSkeletons_D41_NoSmear_noPU.sh || return "$?"
+        ./produceSkeletons_D41_NoSmear_PU_AVE_200_BX_25ns.sh || return "$?"
         cd "$CMSSW_VERSION/src"
         scram b python
         cd "$origin"
@@ -153,7 +157,7 @@ action() {
     # minimal software stack
     #
 
-   # certificate proxy handling
+    # certificate proxy handling
     local proxy_base="x509up_u$( id -u )"
     if [ "$HGC_ON_HTCONDOR" = "1" ] && ls ${proxy_base}* &> /dev/null; then
         export X509_USER_CERT="/tmp/$proxy_base"
