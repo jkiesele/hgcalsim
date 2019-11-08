@@ -123,14 +123,17 @@ action() {
 
         # custom packages
         git cms-init
+
         git cms-addpkg IOMC/ParticleGuns
         git cms-addpkg SimCalorimetry/Configuration
         git cms-addpkg SimDataFormats/CaloAnalysis
         git cms-addpkg SimGeneral/CaloAnalysis
         git cms-addpkg SimGeneral/MixingModule
-        git cms-checkout-topic riga:hgc_simcluster_merging
-        git clone https://github.com/CMS-HGCAL/reco-prodtools.git reco_prodtools
-        ( cd reco_prodtools; git checkout dev )
+        git cms-checkout-topic riga:hgctruth
+
+        git clone https://github.com/riga/reco-prodtools.git reco_prodtools
+        ( cd reco_prodtools; git checkout hgctruth )
+
         git clone https://github.com/CMS-HGCAL/reco-ntuples.git RecoNtuples
 
         # compile
