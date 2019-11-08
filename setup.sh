@@ -134,7 +134,8 @@ action() {
         git clone https://github.com/riga/reco-prodtools.git reco_prodtools
         ( cd reco_prodtools; git checkout hgctruth )
 
-        git clone https://github.com/CMS-HGCAL/reco-ntuples.git RecoNtuples
+        git clone https://github.com/riga/reco-ntuples.git RecoNtuples
+        ( cd RecoNtuples; git checkout hgctruth )
 
         # compile
         scram b -j
@@ -254,6 +255,7 @@ action() {
         export HGC_SCHEDULER_HOST=""
     fi
     export HGC_SCHEDULER_PORT="80"
+    export HGC_LOCAL_SCHEDULER="False"
 
     # source law's bash completion scipt
     source "$( law completion )" ""
