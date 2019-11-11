@@ -137,6 +137,8 @@ action() {
         git clone https://github.com/riga/reco-ntuples.git RecoNtuples
         ( cd RecoNtuples; git checkout hgctruth )
 
+        git clone https://github.com/jkiesele/graphreco.git RecoHGCal/GraphReco
+
         # compile
         scram b -j
         if [ "$?" != "0" ]; then

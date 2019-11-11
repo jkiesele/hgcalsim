@@ -5,7 +5,7 @@ HGCAL simulation tasks.
 """
 
 
-__all__ = ["GSDTask", "RecoTask", "NtupTask"]
+__all__ = ["GSDTask", "RecoTask", "NtupTask", "WindowNtupTask"]
 
 
 import sys
@@ -238,6 +238,10 @@ class RecoTask(ParallelProdWorkflow):
             outputFileDQM=outp["dqm"].uri(),
         ))
 
+        # remove GSD input after completion of the reco step
+        for inp in law.util.flatten(inp["gsd"]):
+            inp.remove()
+
 
 class NtupTask(ParallelProdWorkflow):
 
@@ -254,6 +258,26 @@ class NtupTask(ParallelProdWorkflow):
         outp = self.output()
 
         cms_run_and_publish(self, inp["cfg"]["ntup"].path, dict(
+            inputFiles=[inp["reco"]["reco"].uri()],
+            outputFile=outp.uri(),
+        ))
+
+
+class WindowNtupTask(ParallelProdWorkflow):
+
+    # set previous_task which ParallelProdWorkflow uses to set the requirements
+    previous_task = ("reco", RecoTask)
+
+    def output(self):
+        return self.local_target("windowntup_{}.root".format(self.branch))
+
+    @law.decorator.notify
+    @law.decorator.localize
+    def run(self):
+        inp = self.input()
+        outp = self.output()
+
+        cms_run_and_publish(self, "$CMSSW_BASE/src/RecoHGCal/GraphReco/test/windowNTuple_cfg.py", dict(
             inputFiles=[inp["reco"]["reco"].uri()],
             outputFile=outp.uri(),
         ))
