@@ -87,7 +87,7 @@ law run sim.NtupTask \
   --n-tasks 10 --pilot --workflow htcondor
 ```
 
-Testing window ntuple task, for ttbar:
+Testing WindowNtupTask task, for ttbar (no PU):
 
 ```shell
 law run sim.WindowNtupTask \
