@@ -129,11 +129,17 @@ action() {
         git cms-addpkg SimDataFormats/CaloAnalysis
         git cms-addpkg SimGeneral/CaloAnalysis
         git cms-addpkg SimGeneral/MixingModule
-        git cms-checkout-topic riga:hgctruth
+        #git cms-checkout-topic riga:hgctruth
+        echo "Merging topic: from Jan's rollback to older hgctruth definitions"
+        git cms-merge-topic jkiesele:from-CMSSW_11_0_0_pre9
 
-        git clone https://github.com/riga/reco-prodtools.git reco_prodtools
-        ( cd reco_prodtools; git checkout hgctruth )
+        # this rollback requires checking out a small modification to Marcel's reco-prodtools, to disable running HGCTruthProducer in reco step
+        #git clone https://github.com/riga/reco-prodtools.git reco_prodtools
+        #( cd reco_prodtools; git checkout hgctruth )
+        git clone https://github.com/gvonsem/reco-prodtools.git reco_prodtools
+        ( cd reco_prodtools; git checkout dev-hgctruth-Jan )
 
+        # and this rollback will not yet work for the 'standard' ntuples, but let's ignore this inconsistency for now
         git clone https://github.com/riga/reco-ntuples.git RecoNtuples
         ( cd RecoNtuples; git checkout hgctruth )
 
@@ -148,7 +154,8 @@ action() {
 
         # create the prodtools base templates once
         cd reco_prodtools/templates/python
-        ./produceSkeletons_D41_NoSmear_PU_AVE_200_BX_25ns.sh || return "$?"
+        #./produceSkeletons_D41_NoSmear_PU_AVE_200_BX_25ns.sh || return "$?"
+        ./produceSkeletons_D41_NoSmear_noPU.sh || return "$?"
         cd "$CMSSW_VERSION/src"
         scram b python
         cd "$origin"
