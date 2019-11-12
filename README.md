@@ -12,7 +12,7 @@
 This repository has submodules, so you should clone it with
 
 ```shell
-git clone --recursive https://github.com/CMS-HGCAL/hgcalsim.git
+git clone -b dev-hgctruth-Jan-windowNTupler --recursive https://github.com/gvonsem/hgcalsim.git
 ```
 
 If you want to write files into the common hgcalsim output directory on EOS at `/eos/cms/store/cmst3/group/hgcal/CMG_studies/hgcalsim` (given that you have the necessary permissions), export
@@ -86,3 +86,15 @@ law run sim.NtupTask \
   --rMin 0 --rMax 0.4 \
   --n-tasks 10 --pilot --workflow htcondor
 ```
+
+Testing window ntuple task, for ttbar:
+
+```shell
+law run sim.WindowNtupTask \
+  --version dev \
+  --nevts 10 \
+  --gunMode physproc \
+  --gunType ttbar \
+  --thresholdMin 10 --thresholdMax 9999 \
+  --zMin 0 --zMax 0 \
+  --n-tasks 5 --pilot --eos --workflow htcondor --transfer-logs
