@@ -262,6 +262,9 @@ class NtupTask(ParallelProdWorkflow):
             outputFile=outp.uri(),
         ))
 
+        # remove GSD input after completion of the reco step
+        for inp in law.util.flatten(inp["reco"]):
+            inp.remove()
 
 class WindowNtupTask(ParallelProdWorkflow):
 

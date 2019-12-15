@@ -131,11 +131,13 @@ action() {
         git cms-addpkg SimGeneral/MixingModule
         #git cms-checkout-topic riga:hgctruth
         echo "Merging topic: from Jan's rollback to older hgctruth definitions"
-        git cms-merge-topic jkiesele:from-CMSSW_11_0_0_pre9
+        git cms-merge-topic jkiesele:hgctruth
 
         # this rollback requires checking out a small modification to Marcel's reco-prodtools, to disable running HGCTruthProducer in reco step
         #git clone https://github.com/riga/reco-prodtools.git reco_prodtools
         #( cd reco_prodtools; git checkout hgctruth )
+        
+        # the truth producer is run aat the ntuple step
         git clone https://github.com/gvonsem/reco-prodtools.git reco_prodtools
         ( cd reco_prodtools; git checkout dev-hgctruth-Jan )
 
