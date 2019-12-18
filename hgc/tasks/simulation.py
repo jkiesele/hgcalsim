@@ -284,3 +284,9 @@ class WindowNtupTask(ParallelProdWorkflow):
             inputFiles=[inp["reco"]["reco"].uri()],
             outputFile=outp.uri(),
         ))
+
+        # remove RECO input after completion of the WindowNtupTask step
+        for inp in law.util.flatten(inp["reco"]):
+            inp.remove()
+            
+            
